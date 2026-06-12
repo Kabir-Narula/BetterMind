@@ -1,6 +1,9 @@
 # Mindful AI
 
+A mental wellness platform — journal daily, track moods, run CBT exercises, and get AI-powered insights.
 
+**Live app:** [mindful-ai-dps.vercel.app](https://mindful-ai-dps.vercel.app/)  
+**Repo:** [github.com/Kabir-Narula/BetterMind](https://github.com/Kabir-Narula/BetterMind)
 
 ## Screenshots
 
