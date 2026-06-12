@@ -5,7 +5,19 @@ A mental wellness platform — journal daily, track moods, run CBT exercises, an
 **Live app:** [mindful-ai-dps.vercel.app](https://mindful-ai-dps.vercel.app/)  
 **Repo:** [github.com/Kabir-Narula/BetterMind](https://github.com/Kabir-Narula/BetterMind)
 
+## Screenshots
+
+**Dashboard** — daily ritual, journal feed, AI coaching
+
 ![Daily Dashboard](Shots/s1.png)
+
+**Insights** — patterns, weekly synthesis, cognitive shifts
+
+![Insights Dashboard](Shots/s2.png)
+
+**AI Companion** — context-aware chat from any page
+
+![AI Companion Chat](Shots/s3.png)
 
 ## What it does
 
