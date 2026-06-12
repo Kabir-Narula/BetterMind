@@ -60,7 +60,7 @@ export default function SignupPage() {
         description: 'Your account has been created.',
       })
 
-      router.push('/dashboard')
+      router.push('/onboarding')
       router.refresh()
     } catch (error: any) {
       toast({

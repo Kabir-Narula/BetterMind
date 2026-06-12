@@ -253,7 +253,7 @@ function getSuggestedAction(
   if (moodTrend === 'down') {
     return {
       text: 'Try a Thought Challenge',
-      link: '/dashboard/cbt',
+      link: '/cbt',
       icon: '💭'
     }
   }

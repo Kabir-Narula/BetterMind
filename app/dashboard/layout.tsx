@@ -5,6 +5,8 @@ import DashboardNav from '@/components/dashboard/dashboard-nav'
 import LivingAICompanion from '@/components/dashboard/living-ai-companion'
 import TutorialWrapper from '@/components/tutorial/tutorial-wrapper'
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardLayout({
   children,
 }: {

@@ -23,9 +23,11 @@ export default function TriggerInsightsButton() {
 
       const data = await res.json()
 
+      const patternCount = Array.isArray(data.patterns) ? data.patterns.length : 0
+
       toast({
         title: 'Analysis Complete',
-        description: `Found ${data.patterns.length} new patterns. Refreshing...`,
+        description: `Found ${patternCount} new patterns. Refreshing...`,
       })
 
       // Force refresh to show new data

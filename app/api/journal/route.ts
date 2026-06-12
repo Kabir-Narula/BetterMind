@@ -5,6 +5,7 @@ import { AnalysisService } from '@/lib/analysis-service'
 import { journalSchema, RATE_LIMITS, validateInput } from '@/lib/validations'
 import { invalidateStreakCache } from '@/lib/streak-service'
 import { invalidateContextCache } from '@/lib/user-context-service'
+import { getTodayInTimezone } from '@/lib/timezone'
 import { z } from 'zod'
 
 // ============================================================================
@@ -138,6 +139,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Link entry to today's day log for consistent archive grouping
+    const todayDate = getTodayInTimezone()
+    const dayLog = await prisma.dayLog.upsert({
+      where: {
+        userId_date: {
+          userId: user.userId,
+          date: todayDate,
+        },
+      },
+      create: {
+        userId: user.userId,
+        date: todayDate,
+      },
+      update: {},
+    })
+
     // Create journal entry with initial placeholder analysis
     const entry = await prisma.journalEntry.create({
       data: {
@@ -149,6 +166,7 @@ export async function POST(request: NextRequest) {
         sentiment: 0,
         sentimentLabel: 'neutral',
         feedback: 'AI is analyzing your entry...',
+        dayLogId: dayLog.id,
       },
     })
 

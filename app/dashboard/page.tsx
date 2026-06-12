@@ -6,6 +6,8 @@ import { StreakService } from '@/lib/streak-service'
 import { FeedEntry } from '@/lib/types'
 import { getTodayInTimezone, getStartOfDayInToronto, getEndOfDayInToronto } from '@/lib/timezone'
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
   const authUser = await getCurrentUser()
   if (!authUser) redirect('/login')

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { parseDateForDB, getTodayInTimezone } from '@/lib/timezone'
+import { intentionSchema, validateInput } from '@/lib/validations'
 
 // Force dynamic rendering (this route uses cookies for auth)
 export const dynamic = 'force-dynamic'
@@ -13,14 +14,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { intention, localDate } = await request.json()
+    const body = await request.json()
+    const validation = validateInput(intentionSchema, { intention: body.intention })
 
-    if (!intention || typeof intention !== 'string') {
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'Intention is required' },
+        { error: 'Validation failed', details: validation.errors },
         { status: 400 }
       )
     }
+
+    const { intention } = validation.data
+    const { localDate } = body
 
     // Use client-provided local date (YYYY-MM-DD format) if available
     // This ensures the correct calendar date in Toronto timezone is used

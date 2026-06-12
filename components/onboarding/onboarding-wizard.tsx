@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowRight, ArrowLeft, Check, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/ui/use-toast'
 
 // Types matching our schema/plan
 type OnboardingData = {
@@ -28,6 +29,7 @@ const INITIAL_DATA: OnboardingData = {
 
 export function OnboardingWizard() {
     const router = useRouter()
+    const { toast } = useToast()
     const [step, setStep] = useState(0)
     const [data, setData] = useState<OnboardingData>(INITIAL_DATA)
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -53,14 +55,19 @@ export function OnboardingWizard() {
                 body: JSON.stringify(data)
             })
 
-            if (!response.ok) throw new Error('Failed to save profile')
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}))
+                throw new Error(errorData.error || 'Failed to save profile')
+            }
 
-            // Force a hard refresh to ensure server-side auth state updates
-            // and we get the fresh dashboard layout
             window.location.href = '/dashboard'
         } catch (error) {
             console.error(error)
-            // Show error toast here
+            toast({
+                title: 'Could not save profile',
+                description: error instanceof Error ? error.message : 'Please try again.',
+                variant: 'destructive',
+            })
         } finally {
             setIsSubmitting(false)
         }
@@ -78,6 +85,11 @@ export function OnboardingWizard() {
             window.location.href = '/dashboard'
         } catch (error) {
             console.error(error)
+            toast({
+                title: 'Could not skip onboarding',
+                description: 'Please try again.',
+                variant: 'destructive',
+            })
         } finally {
             setIsSubmitting(false)
         }
@@ -183,8 +195,12 @@ function AgeStageStep({ data, updateData, onNext, onBack, onSkip, isSubmitting }
     ]
 
     const lifeStages = [
-        'Student', 'Working Full-time', 'Working & Studying', 'Between Jobs', 'Retired', 'Other'
-    ]
+        { id: 'student', label: 'Student' },
+        { id: 'early-career', label: 'Working Full-time' },
+        { id: 'transitioning', label: 'Between Jobs' },
+        { id: 'retired', label: 'Retired' },
+        { id: 'other', label: 'Other' },
+    ] as const
 
     const isValid = data.ageGroup && data.lifeStage
 
@@ -225,14 +241,14 @@ function AgeStageStep({ data, updateData, onNext, onBack, onSkip, isSubmitting }
                         <div className="flex flex-wrap gap-2">
                             {lifeStages.map((stage) => (
                                 <button
-                                    key={stage}
-                                    onClick={() => updateData({ lifeStage: stage })}
-                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${data.lifeStage === stage
+                                    key={stage.id}
+                                    onClick={() => updateData({ lifeStage: stage.id })}
+                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${data.lifeStage === stage.id
                                             ? 'bg-indigo-600 text-white'
                                             : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                         }`}
                                 >
-                                    {stage}
+                                    {stage.label}
                                 </button>
                             ))}
                         </div>
@@ -475,6 +491,14 @@ function WellbeingStep({ data, updateData, onNext, onBack, onSkip, isSubmitting 
     )
 }
 
+const LIFE_STAGE_LABELS: Record<string, string> = {
+    student: 'Student',
+    'early-career': 'Working Full-time',
+    transitioning: 'Between Jobs',
+    retired: 'Retired',
+    other: 'Other',
+}
+
 function PreviewStep({ data, onSubmit, isSubmitting, onBack }: any) {
     return (
         <div className="flex-1 flex flex-col space-y-6">
@@ -490,7 +514,7 @@ function PreviewStep({ data, onSubmit, isSubmitting, onBack }: any) {
                     </div>
                     <div>
                         <div className="font-medium text-slate-900">{data.nickname}</div>
-                        <div className="text-sm text-slate-500">{data.ageGroup} • {data.lifeStage}</div>
+                        <div className="text-sm text-slate-500">{data.ageGroup} • {LIFE_STAGE_LABELS[data.lifeStage] || data.lifeStage}</div>
                     </div>
                 </div>
 

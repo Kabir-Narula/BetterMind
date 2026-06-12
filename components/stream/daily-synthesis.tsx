@@ -178,6 +178,14 @@ function DailySynthesis({ dayLogId, morningIntention, entriesCount }: DailySynth
 
   const handleSave = async () => {
     if (!reflection.trim()) return
+    if (!dayLogId) {
+      toast({
+        title: 'Not ready yet',
+        description: 'Set a morning intention first, then add at least one entry today.',
+        variant: 'destructive',
+      })
+      return
+    }
     if (reflection.length > 500) {
       toast({
         title: 'Too Long',
@@ -348,7 +356,7 @@ function DailySynthesis({ dayLogId, morningIntention, entriesCount }: DailySynth
         >
           <Button
             onClick={handleSave}
-            disabled={loading || !reflection.trim() || reflection.length > 500}
+            disabled={loading || !reflection.trim() || reflection.length > 500 || !dayLogId}
             className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90 transition-all disabled:opacity-50 h-12"
           >
             {loading ? (

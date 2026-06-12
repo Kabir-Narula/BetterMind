@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Card } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { TrendingUp, TrendingDown, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
 
@@ -45,15 +46,35 @@ function getMessageBg(type: string) {
 
 export default function AIProactiveCoach({ userId }: { userId: string }) {
     const [insights, setInsights] = useState<any>(null)
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
+        setLoading(true)
         fetch('/api/ai-coach')
-            .then(res => res.json())
-            .then(data => setInsights(data))
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to load coach insights')
+                return res.json()
+            })
+            .then(data => {
+                if (Array.isArray(data.messages)) {
+                    setInsights(data)
+                }
+            })
             .catch(() => { })
+            .finally(() => setLoading(false))
     }, [userId])
 
-    if (!insights || insights.messages.length === 0) return null
+    if (loading) {
+        return (
+            <Card className="p-5 bg-gradient-to-br from-slate-50 to-indigo-50/50 border-slate-200 space-y-3">
+                <Skeleton className="h-5 w-24" />
+                <Skeleton className="h-16 w-full rounded-lg" />
+                <Skeleton className="h-10 w-full rounded-lg" />
+            </Card>
+        )
+    }
+
+    if (!insights?.messages?.length) return null
 
     return (
         <Card className="p-5 bg-gradient-to-br from-slate-50 to-indigo-50/50 border-slate-200">

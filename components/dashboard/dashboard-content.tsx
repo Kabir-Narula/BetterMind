@@ -212,7 +212,7 @@ export default function DashboardContent({
           </div>
 
           {/* Evening Synthesis */}
-          {(todayEntries.length > 0 && dayLog) || tutorialActive ? (
+          {(todayEntries.length > 0 && dayLog?.id) || tutorialActive ? (
             <DailySynthesis
               dayLogId={dayLog?.id || ''}
               morningIntention={dayLog?.morningIntention || ''}

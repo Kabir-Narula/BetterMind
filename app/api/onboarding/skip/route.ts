@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       create: {
         userId: user.userId,
         ageGroup: '25-34', // Default
-        lifeStage: 'working', // Default
+        lifeStage: 'early-career', // Default
         communicationStyle: 'conversational', // Default
         preferredTone: 'conversational', // Required field - derived from communicationStyle
         hobbies: [],

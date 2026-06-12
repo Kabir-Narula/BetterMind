@@ -207,7 +207,7 @@ function ThoughtChallenge({ onClose, className }: ThoughtChallengeProps) {
         try {
             const conversation = questions.map((q, i) => ({ question: q, answer: answers[i] }))
 
-            await fetch('/api/cbt/save', {
+            const res = await fetch('/api/cbt/save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -216,6 +216,11 @@ function ThoughtChallenge({ onClose, className }: ThoughtChallengeProps) {
                     conversation
                 }),
             })
+
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}))
+                throw new Error(errorData.error || 'Failed to save exercise')
+            }
 
             setStep('complete')
             toast({

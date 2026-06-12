@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { moodSchema } from '@/lib/validations'
+import { invalidateStreakCache } from '@/lib/streak-service'
+import { getTodayInTimezone } from '@/lib/timezone'
 
 // Force dynamic rendering (this route uses cookies for auth)
 export const dynamic = 'force-dynamic'
@@ -25,8 +27,24 @@ export async function POST(req: NextRequest) {
     }
 
     const { score, type, context } = validation.data
+    const todayDate = getTodayInTimezone()
 
-    // OPTIMIZED: Create both entries in parallel for faster response
+    // Ensure a day log exists for today so entries stay grouped correctly
+    const dayLog = await prisma.dayLog.upsert({
+      where: {
+        userId_date: {
+          userId: user.userId,
+          date: todayDate,
+        },
+      },
+      create: {
+        userId: user.userId,
+        date: todayDate,
+      },
+      update: {},
+    })
+
+    // Create snapshot and mood entry in parallel
     const [snapshot] = await Promise.all([
       prisma.moodSnapshot.create({
         data: {
@@ -36,16 +54,18 @@ export async function POST(req: NextRequest) {
           context,
         }
       }),
-      // SYNC FIX: Also create a MoodEntry so it appears in the legacy Feed/Graphs
       prisma.moodEntry.create({
         data: {
           userId: user.userId,
           moodScore: score,
           note: context || 'Pulse Check',
           triggers: [],
+          dayLogId: dayLog.id,
         }
       })
     ])
+
+    invalidateStreakCache(user.userId)
 
     return NextResponse.json(snapshot)
   } catch (error) {
