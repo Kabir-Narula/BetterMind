@@ -3,6 +3,7 @@ import { openai, GPT_MODEL_FAST, withRetry, estimateTokens, truncateToTokenBudge
 import { PatternDetectionService } from '@/lib/pattern-detection'
 import { parseAIJSON } from '@/lib/utils'
 import { subDays } from 'date-fns'
+import { formatInToronto, parseDateForDB } from '@/lib/timezone'
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -302,28 +303,34 @@ export class AnalysisService {
       }
     })
 
-    // Update or Create DayLog with insights
-    const date = new Date(entry.createdAt)
-    date.setHours(0, 0, 0, 0)
+    // Update DayLog insights using the entry's linked day log or Toronto calendar date
+    const insightData = {
+      dailyInsight: analysis.insight,
+      suggestedAction: analysis.action,
+    }
 
-    await prisma.dayLog.upsert({
-      where: {
-        userId_date: {
+    if (entry.dayLogId) {
+      await prisma.dayLog.update({
+        where: { id: entry.dayLogId },
+        data: insightData,
+      })
+    } else {
+      const date = parseDateForDB(formatInToronto(entry.createdAt, 'yyyy-MM-dd'))
+      await prisma.dayLog.upsert({
+        where: {
+          userId_date: {
+            userId: entry.userId,
+            date,
+          },
+        },
+        create: {
           userId: entry.userId,
-          date: date
-        }
-      },
-      create: {
-        userId: entry.userId,
-        date: date,
-        dailyInsight: analysis.insight,
-        suggestedAction: analysis.action
-      },
-      update: {
-        dailyInsight: analysis.insight,
-        suggestedAction: analysis.action
-      }
-    })
+          date,
+          ...insightData,
+        },
+        update: insightData,
+      })
+    }
 
     // Trigger pattern detection periodically
     await this.maybeRunPatternDetection(entry.userId, entry.user.profile)

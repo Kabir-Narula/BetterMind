@@ -7,10 +7,11 @@ import DailySynthesis from '@/components/stream/daily-synthesis'
 import DailyFeed from '@/components/stream/daily-feed'
 import StreakCounter from '@/components/dashboard/streak-counter'
 import AIProactiveCoach from '@/components/dashboard/ai-proactive-coach'
+import SuggestedActionCard from '@/components/dashboard/suggested-action-card'
 import QuickJournalModal from '@/components/dashboard/quick-journal-modal'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { PenLine, Sparkles, ArrowRight, Moon, CheckCircle2 } from 'lucide-react'
+import { PenLine, Sparkles, ArrowRight, Moon, CheckCircle2, Lightbulb } from 'lucide-react'
 import { DashboardData } from '@/lib/types'
 import Link from 'next/link'
 import { getTodayString, formatInToronto } from '@/lib/timezone'
@@ -206,13 +207,31 @@ export default function DashboardContent({
             />
           </div>
 
+          {/* AI Daily Insight */}
+          {dayLog?.dailyInsight && !tutorialActive && (
+            <div className="p-6 rounded-2xl bg-gradient-to-br from-amber-50/80 to-orange-50/50 border border-amber-200/50">
+              <div className="flex items-center gap-2 mb-3">
+                <Lightbulb className="h-4 w-4 text-amber-600" />
+                <span className="text-xs font-bold tracking-widest uppercase text-amber-700">Today&apos;s Insight</span>
+              </div>
+              <p className="text-gray-800 leading-relaxed">{dayLog.dailyInsight}</p>
+            </div>
+          )}
+
+          {dayLog?.suggestedAction && dayLog?.id && !tutorialActive && (
+            <SuggestedActionCard
+              dayLogId={dayLog.id}
+              suggestedAction={dayLog.suggestedAction}
+            />
+          )}
+
           {/* Feed */}
           <div data-tour="daily-feed">
             <DailyFeed entries={todayEntries} />
           </div>
 
           {/* Evening Synthesis */}
-          {(todayEntries.length > 0 && dayLog?.id) || tutorialActive ? (
+          {dayLog?.id && (todayEntries.length > 0 || tutorialActive) ? (
             <DailySynthesis
               dayLogId={dayLog?.id || ''}
               morningIntention={dayLog?.morningIntention || ''}

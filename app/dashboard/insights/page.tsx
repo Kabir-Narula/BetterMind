@@ -138,7 +138,7 @@ export default async function InsightsPage() {
                                         )}
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
                                         <div>
                                             <h4 className="font-serif font-bold text-xl mb-2 text-gray-900">High Point</h4>
                                             <p className="text-gray-600 leading-relaxed text-sm">{r.bestMoment}</p>
@@ -148,6 +148,18 @@ export default async function InsightsPage() {
                                             <p className="text-gray-500 leading-relaxed text-sm">{r.hardestMoment}</p>
                                         </div>
                                     </div>
+                                    {r.howHandled && (
+                                        <p className="text-sm text-gray-600 mb-3">
+                                            <span className="font-semibold text-gray-800">How you handled it: </span>
+                                            {r.howHandled}
+                                        </p>
+                                    )}
+                                    {r.adviceForNextWeek && (
+                                        <p className="text-sm text-indigo-700 bg-indigo-50/60 rounded-lg px-4 py-3">
+                                            <span className="font-semibold">For next week: </span>
+                                            {r.adviceForNextWeek}
+                                        </p>
+                                    )}
                                 </article>
                             ))}
                         </div>

@@ -78,7 +78,8 @@ export default async function DashboardPage() {
       title: j.title,
       content: j.content,
       moodScore: j.moodRating,
-      sentimentLabel: j.sentimentLabel
+      sentimentLabel: j.sentimentLabel,
+      feedback: j.feedback,
     }))
   ].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
 

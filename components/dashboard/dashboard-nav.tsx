@@ -23,7 +23,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/lib/utils'
-import GlobalChatSheet from '@/components/dashboard/global-chat-sheet'
+import { useChat } from '@/components/dashboard/chat-provider'
 
 interface DashboardNavProps {
   user: {
@@ -35,9 +35,10 @@ interface DashboardNavProps {
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard' },
+  { href: '/dashboard/goals', label: 'Goals' },
   { href: '/dashboard/archive', label: 'Archive' },
   { href: '/dashboard/insights', label: 'Insights' },
-  { href: '/cbt', label: 'Exercises' },
+  { href: '/dashboard/exercises', label: 'Exercises' },
 ]
 
 const getInitials = (name: string | null, email: string): string => {
@@ -56,7 +57,7 @@ export default function DashboardNav({ user }: DashboardNavProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { toast } = useToast()
-  const [chatOpen, setChatOpen] = useState(false)
+  const { openChat } = useChat()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = async () => {
@@ -77,16 +78,7 @@ export default function DashboardNav({ user }: DashboardNavProps) {
     }
   }
 
-  // Determine context based on current page
-  const getChatContext = () => {
-    if (pathname.includes('/cbt')) {
-      return { page: 'cbt' }
-    }
-    if (pathname.includes('/insights')) {
-      return { page: 'insights' }
-    }
-    return { page: 'dashboard' }
-  }
+  // Determine context based on current page — handled by ChatProvider
 
   return (
     <>
@@ -133,7 +125,7 @@ export default function DashboardNav({ user }: DashboardNavProps) {
                       className="justify-start gap-3 h-12 rounded-xl border-gray-200 hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700 transition-all"
                       onClick={() => {
                         setMobileMenuOpen(false)
-                        setChatOpen(true)
+                        openChat()
                       }}
                     >
                       <MessageCircle className="h-4 w-4" />
@@ -180,7 +172,7 @@ export default function DashboardNav({ user }: DashboardNavProps) {
                 variant="ghost"
                 size="icon"
                 className="hidden md:flex h-10 w-10 rounded-xl hover:bg-purple-50 hover:text-purple-600 transition-colors"
-                onClick={() => setChatOpen(true)}
+                onClick={() => openChat()}
                 title="Chat with AI Companion"
               >
                 <MessageCircle className="h-5 w-5" />
@@ -220,12 +212,6 @@ export default function DashboardNav({ user }: DashboardNavProps) {
           </div>
         </div>
       </nav>
-
-      <GlobalChatSheet
-        open={chatOpen}
-        onOpenChange={setChatOpen}
-        context={getChatContext()}
-      />
     </>
   )
 }

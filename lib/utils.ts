@@ -14,20 +14,6 @@ export function getMoodEmoji(moodRating: number): string {
 }
 
 /**
- * @deprecated Use formatInToronto from lib/timezone.ts instead for timezone-aware formatting
- */
-export function formatDate(date: Date | string): string {
-  // This uses browser locale which may not match Toronto timezone
-  // Consider using formatInToronto from lib/timezone.ts instead
-  const d = typeof date === 'string' ? new Date(date) : date
-  return d.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  })
-}
-
-/**
  * Basic PII Scrubber
  * Replaces common PII patterns with generic placeholders to protect privacy
  * before sending to AI.
@@ -42,27 +28,6 @@ export function anonymizeText(text: string): string {
     // Names (Capitalized words that aren't at start of sentence is hard, 
     // so we'll just rely on the prompt instructions for now, but this is a start)
     // Real PII scrubbing is hard, this is a basic "Best Effort"
-}
-
-/**
- * Unified Daily View Helper
- * Merges the "DayLog" (Plan/Summary) with "JournalEntry" (Moments)
- * into one cohesive object to reduce confusion.
- */
-export interface DailyUnifiedView {
-  date: Date
-  summary: {
-    intention: string | null
-    insight: string | null
-    action: string | null
-  }
-  entries: Array<{
-    id: string
-    time: string
-    title: string
-    content: string
-    mood: number
-  }>
 }
 
 /**

@@ -3,7 +3,8 @@ import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getChatResponse } from '@/lib/openai'
 import { UserContextService } from '@/lib/user-context-service'
-import { RATE_LIMITS, CONTENT_LIMITS } from '@/lib/validations'
+import { ChatService } from '@/lib/chat-service'
+import { RATE_LIMITS, CONTENT_LIMITS, chatMessageSchema, validateInput } from '@/lib/validations'
 import { z } from 'zod'
 
 // ============================================================================
@@ -133,8 +134,35 @@ function logChatRequest(
 }
 
 // ============================================================================
-// ROUTE HANDLER
+// ROUTE HANDLERS
 // ============================================================================
+
+export async function GET(request: NextRequest) {
+  try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const sessionId = new URL(request.url).searchParams.get('sessionId')
+
+    if (sessionId) {
+      const messages = await ChatService.getSessionMessages(sessionId, user.userId)
+      return NextResponse.json({ sessionId, messages })
+    }
+
+    const latest = await ChatService.getLatestSession(user.userId)
+    if (!latest) {
+      return NextResponse.json({ sessionId: null, messages: [] })
+    }
+
+    const messages = await ChatService.getSessionMessages(latest.id, user.userId)
+    return NextResponse.json({ sessionId: latest.id, messages })
+  } catch (error) {
+    console.error('[Chat API] GET error:', error)
+    return NextResponse.json({ error: 'Failed to load chat history' }, { status: 500 })
+  }
+}
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
@@ -180,17 +208,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Extract and validate message
-    const { message, conversationHistory, context } = body as Record<string, unknown>
-
-    if (!message || typeof message !== 'string') {
+    const validation = validateInput(chatMessageSchema, body)
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'Message is required and must be a string', code: 'INVALID_MESSAGE' },
+        { error: 'Validation failed', details: validation.errors },
         { status: 400 }
       )
     }
 
-    // Sanitize the message
+    const { message, conversationHistory, context } = validation.data
+    const sessionId = typeof (body as Record<string, unknown>).sessionId === 'string'
+      ? (body as Record<string, unknown>).sessionId as string
+      : undefined
+
     const sanitizedMessage = sanitizeMessage(message)
 
     if (sanitizedMessage.length < 1) {
@@ -203,10 +233,9 @@ export async function POST(request: NextRequest) {
     // Validate conversation history
     const validatedHistory = validateConversationHistory(conversationHistory)
 
-    // Validate context
     const validatedContext = {
-      page: typeof (context as any)?.page === 'string' ? (context as any).page : undefined,
-      entryId: typeof (context as any)?.entryId === 'string' ? (context as any).entryId : undefined,
+      page: context?.page,
+      entryId: context?.entryId,
     }
 
     // Log request for monitoring
@@ -283,13 +312,19 @@ export async function POST(request: NextRequest) {
       deepUserContext
     )
 
-    // Log response time
+    const session = await ChatService.getOrCreateSession(
+      user.userId,
+      sessionId,
+      validatedContext.entryId
+    )
+
+    await ChatService.saveMessages(session.id, user.userId, sanitizedMessage, response)
+
     const responseTime = Date.now() - startTime
     console.log(`[Chat API] Response generated in ${responseTime}ms`)
 
-    // Return response with rate limit headers
     return NextResponse.json(
-      { response },
+      { response, sessionId: session.id },
       {
         headers: {
           'X-RateLimit-Remaining': String(rateLimit.remaining),

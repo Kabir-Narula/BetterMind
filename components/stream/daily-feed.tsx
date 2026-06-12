@@ -143,11 +143,18 @@ function FeedItem({ entry }: { entry: FeedEntry }) {
                                 </Button>
                             )}
 
-                            {entry.sentimentLabel && (
-                                <div className="mt-6 pt-4 border-t border-gray-100 flex items-center gap-2">
-                                    <span className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">
-                                        AI Analysis: {entry.sentimentLabel}
-                                    </span>
+                            {(entry.sentimentLabel || entry.feedback) && (
+                                <div className="mt-6 pt-4 border-t border-gray-100 space-y-2">
+                                    {entry.sentimentLabel && (
+                                        <span className="text-[10px] font-bold tracking-widest text-gray-400 uppercase block">
+                                            AI Analysis: {entry.sentimentLabel}
+                                        </span>
+                                    )}
+                                    {entry.feedback && entry.feedback !== 'AI is analyzing your entry...' && (
+                                        <p className="text-sm text-gray-600 italic leading-relaxed">
+                                            {entry.feedback}
+                                        </p>
+                                    )}
                                 </div>
                             )}
                         </article>

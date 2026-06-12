@@ -67,8 +67,9 @@ export default async function ArchiveDayPage({ params }: ArchiveDayPageProps) {
             createdAt: j.createdAt,
             title: j.title,
             content: j.content,
-            moodScore: j.moodRating,
-            sentimentLabel: j.sentimentLabel
+      moodScore: j.moodRating,
+      sentimentLabel: j.sentimentLabel,
+      feedback: j.feedback,
         }))
     ].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
 

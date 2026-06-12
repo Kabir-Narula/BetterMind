@@ -47,7 +47,7 @@ export default function PulseCheck({ morningIntention, lastMoodEntryTime }: Puls
   const { toast } = useToast()
   const router = useRouter()
 
-  // Check if user can check in (limit 1 per 15 seconds for dev, 1 per hour for prod)
+  // Check if user can check in (15 second cooldown between pulse checks)
   const canCheckIn = minutesRemaining <= 0
 
   // Memoize mood visual properties

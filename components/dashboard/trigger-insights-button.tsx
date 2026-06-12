@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Loader2, Sparkles } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
-import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 
 export default function TriggerInsightsButton() {
@@ -27,7 +26,7 @@ export default function TriggerInsightsButton() {
 
       toast({
         title: 'Analysis Complete',
-        description: `Found ${patternCount} new patterns. Refreshing...`,
+        description: `Found ${patternCount} new patterns and updated your weekly review. Refreshing...`,
       })
 
       // Force refresh to show new data

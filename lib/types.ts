@@ -14,6 +14,7 @@ export interface FeedEntry {
   
   // Journal Specific
   sentimentLabel?: string | null
+  feedback?: string | null
   
   // Pattern Specific
   confidence?: number

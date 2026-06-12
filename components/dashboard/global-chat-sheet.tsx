@@ -147,16 +147,24 @@ const QuickReplies = memo(function QuickReplies({
 
 function GlobalChatSheet({ open, onOpenChange, context }: GlobalChatSheetProps) {
     const [messages, setMessages] = useState<Message[]>([])
+    const [sessionId, setSessionId] = useState<string | null>(null)
     const [input, setInput] = useState('')
     const [loading, setLoading] = useState(false)
+    const [historyLoading, setHistoryLoading] = useState(false)
     const [showQuickReplies, setShowQuickReplies] = useState(true)
     const scrollRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
+    const skipHistoryRef = useRef(false)
+    const sessionIdRef = useRef<string | null>(null)
     const { toast } = useToast()
     const prefersReducedMotion = useReducedMotion()
 
     // Generate unique message ID
     const generateId = () => Math.random().toString(36).substring(2, 10)
+
+    useEffect(() => {
+        sessionIdRef.current = sessionId
+    }, [sessionId])
 
     // Get context-aware greeting
     const getContextGreeting = useCallback((ctx?: typeof context) => {
@@ -172,28 +180,89 @@ function GlobalChatSheet({ open, onOpenChange, context }: GlobalChatSheetProps) 
                 return "Data tells a story. How does seeing your trends make you feel?"
             case 'cbt':
                 return "Ready to work through some thoughts together? I'm here to help."
+            case 'goals':
+                return "Goals give direction. Which one would you like to talk through today?"
             default:
                 return "Hi there! I'm here to listen and think with you. How are you feeling?"
         }
     }, [])
 
-    // Initialize with greeting
+    // Load persisted history or show greeting
     useEffect(() => {
-        if (open && messages.length === 0) {
+        if (!open) return
+
+        let cancelled = false
+
+        const loadHistory = async () => {
+            setHistoryLoading(true)
             const greeting = getContextGreeting(context)
-            setMessages([{
-                id: generateId(),
-                role: 'assistant',
-                content: greeting,
-                timestamp: new Date()
-            }])
+
+            if (skipHistoryRef.current) {
+                skipHistoryRef.current = false
+                if (!cancelled) {
+                    setMessages([{
+                        id: generateId(),
+                        role: 'assistant',
+                        content: greeting,
+                        timestamp: new Date(),
+                    }])
+                    setShowQuickReplies(true)
+                    setHistoryLoading(false)
+                }
+                return
+            }
+
+            try {
+                const activeSessionId = sessionIdRef.current
+                const url = activeSessionId
+                    ? `/api/chat?sessionId=${activeSessionId}`
+                    : '/api/chat'
+                const res = await fetch(url)
+                if (!res.ok) throw new Error('Failed to load history')
+                const data = await res.json()
+                if (cancelled) return
+
+                if (data.sessionId) setSessionId(data.sessionId)
+
+                if (Array.isArray(data.messages) && data.messages.length > 0) {
+                    setMessages(
+                        data.messages.map((m: { role: string; content: string; createdAt: string }) => ({
+                            id: generateId(),
+                            role: m.role as 'user' | 'assistant',
+                            content: m.content,
+                            timestamp: new Date(m.createdAt),
+                        }))
+                    )
+                    setShowQuickReplies(false)
+                } else {
+                    setMessages([{
+                        id: generateId(),
+                        role: 'assistant',
+                        content: greeting,
+                        timestamp: new Date(),
+                    }])
+                    setShowQuickReplies(true)
+                }
+            } catch {
+                if (!cancelled) {
+                    setMessages([{
+                        id: generateId(),
+                        role: 'assistant',
+                        content: greeting,
+                        timestamp: new Date(),
+                    }])
+                    setShowQuickReplies(true)
+                }
+            } finally {
+                if (!cancelled) setHistoryLoading(false)
+            }
         }
 
-        // Focus input when opened
-        if (open) {
-            setTimeout(() => inputRef.current?.focus(), 100)
-        }
-    }, [open, context, getContextGreeting, messages.length])
+        loadHistory()
+        setTimeout(() => inputRef.current?.focus(), 100)
+
+        return () => { cancelled = true }
+    }, [open, context, getContextGreeting])
 
     // Auto-scroll to bottom with smooth behavior
     useEffect(() => {
@@ -213,8 +282,19 @@ function GlobalChatSheet({ open, onOpenChange, context }: GlobalChatSheetProps) 
     }, [])
 
     // Reset chat
-    const handleReset = useCallback(() => {
+    const handleReset = useCallback(async () => {
         const greeting = getContextGreeting(context)
+        try {
+            const res = await fetch('/api/chat/session', { method: 'POST' })
+            if (res.ok) {
+                const data = await res.json()
+                if (data.sessionId) setSessionId(data.sessionId)
+            } else {
+                setSessionId(null)
+            }
+        } catch {
+            setSessionId(null)
+        }
         setMessages([{
             id: generateId(),
             role: 'assistant',
@@ -246,8 +326,11 @@ function GlobalChatSheet({ open, onOpenChange, context }: GlobalChatSheetProps) 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message: userMessage,
-                    conversationHistory: messages.map(m => ({ role: m.role, content: m.content })),
+                    conversationHistory: messages
+                        .filter(m => !m.isError)
+                        .map(m => ({ role: m.role, content: m.content })),
                     context,
+                    sessionId,
                 }),
             })
 
@@ -257,6 +340,7 @@ function GlobalChatSheet({ open, onOpenChange, context }: GlobalChatSheetProps) 
             }
 
             const data = await res.json()
+            if (data.sessionId) setSessionId(data.sessionId)
             setMessages(prev => [...prev, {
                 id: generateId(),
                 role: 'assistant',

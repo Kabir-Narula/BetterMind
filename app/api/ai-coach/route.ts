@@ -253,7 +253,7 @@ function getSuggestedAction(
   if (moodTrend === 'down') {
     return {
       text: 'Try a Thought Challenge',
-      link: '/cbt',
+      link: '/dashboard/exercises',
       icon: '💭'
     }
   }
@@ -401,14 +401,13 @@ export async function GET() {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     console.error('[AI Coach] Error:', errorMessage)
 
-    return NextResponse.json({
-      messages: [],
-      suggestedAction: null,
-      meta: {
-        userId: '',
-        generatedAt: new Date().toISOString(),
-        cacheHint: 60
-      }
-    })
+    return NextResponse.json(
+      {
+        error: 'Failed to generate coach insights',
+        messages: [],
+        suggestedAction: null,
+      },
+      { status: 500 }
+    )
   }
 }

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { PatternDetectionService } from '@/lib/pattern-detection'
+import { WeeklyReflectionService } from '@/lib/weekly-reflection-service'
 import { prisma } from '@/lib/prisma'
+import { invalidateContextCache } from '@/lib/user-context-service'
 
 // Force dynamic rendering (this route uses cookies for auth)
 export const dynamic = 'force-dynamic'
@@ -55,9 +57,13 @@ export async function POST(request: NextRequest) {
     // Save patterns to database
     const savedPatterns = await PatternDetectionService.savePatterns(user.userId, detectedPatterns)
 
+    const weeklyReflection = await WeeklyReflectionService.generateForUser(user.userId)
+    invalidateContextCache(user.userId)
+
     return NextResponse.json({
       message: `Detected ${savedPatterns.length} patterns`,
       patterns: savedPatterns,
+      weeklyReflection,
     })
   } catch (error: any) {
     console.error('[Pattern Detection] Error:', error)

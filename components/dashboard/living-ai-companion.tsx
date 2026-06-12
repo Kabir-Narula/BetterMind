@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, memo } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Sparkles, MessageCircle, Heart, X, Moon, Zap } from 'lucide-react'
-import GlobalChatSheet from '@/components/dashboard/global-chat-sheet'
+import { useChat } from '@/components/dashboard/chat-provider'
 
 // ============================================================================
 // TYPES & CONSTANTS
@@ -162,7 +162,7 @@ const WelcomeTooltip = memo(function WelcomeTooltip({
 // ============================================================================
 
 function LivingAICompanion() {
-    const [isOpen, setIsOpen] = useState(false)
+    const { openChat, isOpen } = useChat()
     const [emotion, setEmotion] = useState<EmotionState>('neutral')
     const [showWelcome, setShowWelcome] = useState(false)
     const [isHovered, setIsHovered] = useState(false)
@@ -205,10 +205,10 @@ function LivingAICompanion() {
     }, [isOpen])
 
     const handleOpen = useCallback(() => {
-        setIsOpen(true)
+        openChat()
         setShowWelcome(false)
         setEmotion('happy')
-    }, [])
+    }, [openChat])
 
     const handleDismissWelcome = useCallback(() => {
         setShowWelcome(false)
@@ -372,13 +372,6 @@ function LivingAICompanion() {
                     </AnimatePresence>
                 </motion.button>
             </motion.div>
-
-            {/* Chat Interface */}
-            <GlobalChatSheet
-                open={isOpen}
-                onOpenChange={setIsOpen}
-                context={{ page: 'dashboard' }}
-            />
         </>
     )
 }

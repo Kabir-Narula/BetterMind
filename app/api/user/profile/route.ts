@@ -75,6 +75,22 @@ export async function POST(req: Request) {
       })
     }
 
+    const existingGoalCount = await prisma.goal.count({
+      where: { userId: currentUser.userId },
+    })
+
+    if (existingGoalCount === 0 && primaryGoals.length > 0) {
+      await prisma.goal.createMany({
+        data: primaryGoals
+          .map((title) => title.replace(/[^\w\s\-.,!?']/g, '').trim() || title.trim())
+          .filter((title) => title.length >= 3)
+          .map((title) => ({
+            userId: currentUser.userId,
+            title: title.substring(0, 200),
+          })),
+      })
+    }
+
     return NextResponse.json(profile)
   } catch (error) {
     console.error('[PROFILE_CREATE]', error)

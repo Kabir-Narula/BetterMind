@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { CBTService } from '@/lib/cbt-service'
+import { cbtThoughtSchema, validateInput } from '@/lib/validations'
 
 // Force dynamic rendering (this route uses cookies for auth)
 export const dynamic = 'force-dynamic'
@@ -13,7 +14,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { thought, step, conversation } = await req.json()
+    const body = await req.json()
+    const validation = validateInput(cbtThoughtSchema, body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: validation.errors },
+        { status: 400 }
+      )
+    }
+
+    const { thought, step, conversation } = validation.data
     console.log(`[CBT API] Step: ${step}, UserId: ${user.userId.substring(0, 8)}...`)
 
     if (step === 'validate') {
@@ -41,6 +51,13 @@ export async function POST(req: NextRequest) {
     if (step === 'reframe') {
       // Step 2: Generate Reframe
       console.log('[CBT API] Generating reframe...')
+
+      if (!conversation || conversation.length === 0) {
+        return NextResponse.json(
+          { error: 'Conversation is required for reframe step' },
+          { status: 400 }
+        )
+      }
 
       try {
         const reframe = await CBTService.generateReframe(thought, conversation, user.userId)
