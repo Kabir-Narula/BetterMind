@@ -2,7 +2,7 @@
 
 A full-stack mental wellness platform built with Next.js 14. Track moods, journal daily, run CBT exercises, and get AI-powered insights from an empathetic companion.
 
-**Repository:** [github.com/Kabir-Narula/Mindful_Ai_DPS](https://github.com/Kabir-Narula/Mindful_Ai_DPS)
+**Repository:** [github.com/Kabir-Narula/BetterMind](https://github.com/Kabir-Narula/BetterMind)
 
 ## Screenshots
 
@@ -55,8 +55,8 @@ Context-aware chat available from any page via the floating companion or nav.
 
 ```bash
 # Clone the repo
-git clone https://github.com/Kabir-Narula/Mindful_Ai_DPS.git
-cd Mindful_Ai_DPS
+git clone https://github.com/Kabir-Narula/BetterMind.git
+cd BetterMind
 
 # Install dependencies
 npm install
